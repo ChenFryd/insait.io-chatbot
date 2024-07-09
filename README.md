@@ -9,8 +9,9 @@ Also there is a CLI and GUI version for the chatbot.
 - tkinter
 
 ## How to run
-create new .env file with the following variables:
+create new .env file in ./src folder with the following variables:
 OPENAI_API_KEY="YOUR_API_KEY"
+and run the main.py for CLI or chatbox.py for GUI
 
 ## Accuracy
 The chatbot trying to select the user's intent by using the OpenAI API. The accuracy of the chatbot is dependent on the accuracy of the OpenAI API.
