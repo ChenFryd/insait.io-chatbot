@@ -1,19 +1,28 @@
+import os
 import unittest
 from contextlib import redirect_stdout
 from src.chatbot import ChatBot
-from src.main import main
+from src.main import main, speak_to_representive, order_status, return_policy, non_returnable_items, refund_method
 from io import StringIO
 import sys
 from unittest.mock import patch
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class MyTestCase(unittest.TestCase):
-    @patch('builtins.input', side_effect=['order status.', 12345, 'exit'])
+
+    def setUp(self):
+
+        self.chatbot = ChatBot("api_key")
+
+    @patch('builtins.input', side_effect=[12345])
     def test_user_status(self, mock_input):
         """
         Test user status: user enters 'order status' and expects the chatbot to ask for order ID.
         """
         with StringIO() as buf, redirect_stdout(buf):
-            main()
+            order_status(self.chatbot)
             output = buf.getvalue()
             self.assertIn("Chatbot: Your order with ID 12345 is being processed.", output)
 
@@ -21,9 +30,9 @@ class MyTestCase(unittest.TestCase):
         """
         Test request human representative: user enters 'speak to a representative' and expects the chatbot to ask for full name, email, and phone number.
         """
-        with patch('builtins.input', side_effect=['speak to a representative', 'John Doe', 'a@a.com', '05555555555', 'exit']):
+        with patch('builtins.input', side_effect=['John Doe', 'a@a.com', '0555555555']):
             with StringIO() as buf, redirect_stdout(buf):
-                main()
+                speak_to_representive(self.chatbot)
                 output = buf.getvalue()
                 self.assertIn("Chatbot: Your request has been submitted. Our representative will contact you soon.", output)
 
@@ -31,9 +40,10 @@ class MyTestCase(unittest.TestCase):
         """
         Test request human representative twice: user enters 'speak to a representative' twice and expects the chatbot to ask for full name, email, and phone number.
         """
-        with patch('builtins.input', side_effect=['speak to a representative', 'John Doe', 'a@a.com', '05555555555','speak to a representative','exit']):
+        with patch('builtins.input', side_effect=['John Doe', 'a@a.com', '0555555555']):
             with StringIO() as buf, redirect_stdout(buf):
-                main()
+                speak_to_representive(self.chatbot)
+                speak_to_representive(self.chatbot)
                 output = buf.getvalue()
                 self.assertIn("Chatbot: You have already requested to speak to a representative. Please wait for our team to contact you.", output)
 
@@ -41,9 +51,9 @@ class MyTestCase(unittest.TestCase):
         """
         Test incorrect name: user enters 'speak to a representative' and enters an incorrect name.
         """
-        with patch('builtins.input', side_effect=['speak to a representative', 'John', 'exit', 'exit']):
+        with patch('builtins.input', side_effect=['John', 'exit']):
             with StringIO() as buf, redirect_stdout(buf):
-                main()
+                speak_to_representive(self.chatbot)
                 output = buf.getvalue()
                 self.assertIn("Chatbot: first name and last name must be separated by a space.", output)
 
@@ -51,9 +61,9 @@ class MyTestCase(unittest.TestCase):
         """
         Test incorrect name: user enters 'speak to a representative' and enters an incorrect name.
         """
-        with patch('builtins.input', side_effect=['speak to a representative', 'John Doe', 'aa', 'exit', 'exit']):
+        with patch('builtins.input', side_effect=['John Doe', 'aa', 'exit']):
             with StringIO() as buf, redirect_stdout(buf):
-                main()
+                speak_to_representive(self.chatbot)
                 output = buf.getvalue()
                 self.assertIn("Chatbot: Please enter @ in the email.", output)
 
@@ -61,9 +71,9 @@ class MyTestCase(unittest.TestCase):
         """
         Test incorrect name: user enters 'speak to a representative' and enters an incorrect name.
         """
-        with patch('builtins.input', side_effect=['speak to a representative', 'John Doe', 'aa.com', 'exit', 'exit']):
+        with patch('builtins.input', side_effect=['John Doe', 'aa.com', 'exit']):
             with StringIO() as buf, redirect_stdout(buf):
-                main()
+                speak_to_representive(self.chatbot)
                 output = buf.getvalue()
                 self.assertIn("Chatbot: Please enter @ in the email.", output)
 
@@ -71,9 +81,9 @@ class MyTestCase(unittest.TestCase):
         """
         Test incorrect name: user enters 'speak to a representative' and enters an incorrect phone number.
         """
-        with patch('builtins.input', side_effect=['speak to a representative', 'John Doe', 'a@a.com', 'asdf', 'exit','exit']):
+        with patch('builtins.input', side_effect=['John Doe', 'a@a.com', 'asdf', 'exit']):
             with StringIO() as buf, redirect_stdout(buf):
-                main()
+                speak_to_representive(self.chatbot)
                 output = buf.getvalue()
                 self.assertIn("Chatbot: incorrect amount of digits.", output)
 
@@ -81,9 +91,9 @@ class MyTestCase(unittest.TestCase):
         """
         Test incorrect name: user enters 'speak to a representative' and enters an incorrect phone number.
         """
-        with patch('builtins.input', side_effect=['speak to a representative', 'John Doe', 'a@a.com', '0585710693', 'exit','exit']):
+        with patch('builtins.input', side_effect=['John Doe', 'a@a.com', '0585710693', 'exit','exit']):
             with StringIO() as buf, redirect_stdout(buf):
-                main()
+                speak_to_representive(self.chatbot)
                 output = buf.getvalue()
                 self.assertIn("Chatbot: Your request has been submitted. Our representative will contact you soon.", output)
 
@@ -91,9 +101,9 @@ class MyTestCase(unittest.TestCase):
         """
         Test incorrect name: user enters 'speak to a representative' and enters an incorrect phone number.
         """
-        with patch('builtins.input', side_effect=['speak to a representative', 'John Doe', 'a@a.com', '+972585710693', 'exit','exit']):
+        with patch('builtins.input', side_effect=['John Doe', 'a@a.com', '+972585710693', 'exit']):
             with StringIO() as buf, redirect_stdout(buf):
-                main()
+                speak_to_representive(self.chatbot)
                 output = buf.getvalue()
                 self.assertIn("Chatbot: Your request has been submitted. Our representative will contact you soon.", output)
 
@@ -101,31 +111,41 @@ class MyTestCase(unittest.TestCase):
         """
         Test return policy: user enters 'return policy' and expects the chatbot to ask for the return policy.
         """
-        with patch('builtins.input', side_effect=['What is the return policy for items purchased at our store?', 'exit']):
-            with StringIO() as buf, redirect_stdout(buf):
-                main()
-                output = buf.getvalue()
-                self.assertIn("Chatbot: You can return most items within 30 days of purchase for a full refund or exchange. Items must be in their original condition, with all tags and packaging intact. Please bring your receipt or proof of purchase when returning items.", output)
+        with StringIO() as buf, redirect_stdout(buf):
+            return_policy(self.chatbot)
+            output = buf.getvalue()
+            self.assertIn("Chatbot: You can return most items within 30 days of purchase for a full refund or exchange. Items must be in their original condition, with all tags and packaging intact. Please bring your receipt or proof of purchase when returning items.", output)
 
     def test_return_policy_non_returnable_items(self):
         """
         Test return policy: user enters 'return policy' and expects the chatbot to ask for the return policy.
         """
-        with patch('builtins.input', side_effect=['Are there any items that cannot be returned under this policy?', 'exit']):
-            with StringIO() as buf, redirect_stdout(buf):
-                main()
-                output = buf.getvalue()
-                self.assertIn("Chatbot: Yes, certain items such as clearance merchandise, perishable goods, and personal care items are non-returnable. Please check the product description or ask a store associate for more details.", output)
+        with StringIO() as buf, redirect_stdout(buf):
+            non_returnable_items(self.chatbot)
+            output = buf.getvalue()
+            self.assertIn("Chatbot: Yes, certain items such as clearance merchandise, perishable goods, and personal care items are non-returnable. Please check the product description or ask a store associate for more details.", output)
 
     def test_return_policy_refund_method(self):
         """
         Test return policy: user enters 'How will I receive my refund?' and expects the chatbot to ask for the refund policy.
         """
-        with patch('builtins.input', side_effect=['How will I receive my refund?', 'exit']):
+        with StringIO() as buf, redirect_stdout(buf):
+            refund_method(self.chatbot)
+            output = buf.getvalue()
+            self.assertIn("Chatbot: Refunds will be issued to the original form of payment. If you paid by credit card, the refund will be credited to your card. If you paid by cash or check, you will receive a cash refund.", output)
+
+    def test_intent_order_status(self):
+        """
+        Test intent order status: user enters 'order status' and expects the chatbot to determine the intent.
+        """
+        with patch('builtins.input', side_effect=['order status','exit']):
             with StringIO() as buf, redirect_stdout(buf):
-                main()
+                api_key = os.environ.get("OPENAI_API_KEY")
+                chatbot = ChatBot(api_key)
+                main(chatbot)
                 output = buf.getvalue()
-                self.assertIn("Chatbot: Refunds will be issued to the original form of payment. If you paid by credit card, the refund will be credited to your card. If you paid by cash or check, you will receive a cash refund.", output)
+                self.assertIn("Chatbot: Your order with ID 12345 is being processed.", output)
+
 
 if __name__ == '__main__':
     unittest.main()
