@@ -27,7 +27,7 @@ def main(chatbot):
 
 
 def return_policy(chatbot):
-    print(chatbot.get_return_policy())
+    print("Chatbot:", chatbot.get_return_policy())
 
 def non_returnable_items(chatbot):
     print("Chatbot:", chatbot.get_non_returnable_items())
@@ -43,9 +43,10 @@ def order_status(chatbot):
 
 
 def speak_to_representive(chatbot):
-    print("type quit to stop entering details.")
+
     output = None
     while not chatbot.waiting_for_human_representative():
+        print("type quit to stop entering details.")
         if not output and not chatbot.has_full_name():
             full_name = input("Please provide your full name: ")
             if full_name.lower() in ["quit", "exit"]:

@@ -138,13 +138,131 @@ class MyTestCase(unittest.TestCase):
         """
         Test intent order status: user enters 'order status' and expects the chatbot to determine the intent.
         """
-        with patch('builtins.input', side_effect=['order status','exit']):
+        with patch('builtins.input', side_effect=['order status', 12345, 'exit']):
             with StringIO() as buf, redirect_stdout(buf):
                 api_key = os.environ.get("OPENAI_API_KEY")
                 chatbot = ChatBot(api_key)
                 main(chatbot)
                 output = buf.getvalue()
                 self.assertIn("Chatbot: Your order with ID 12345 is being processed.", output)
+
+    def test_accuracy(self):
+        """
+        Test accuracy: user enters 'return policy' and expects the chatbot to determine the intent.
+        """
+        api_key = os.environ.get("OPENAI_API_KEY")
+        chatbot = ChatBot(api_key)
+        tests = { 'order_status': [
+            'where is my package?',
+            'what is the status of my order?',
+            'where is my order?',
+            'can you track my package?',
+            'has my order shipped yet?',
+            'when will my package arrive?',
+            'how can I track my order?',
+            'show me the status of my order please',
+            'I want to know where my package is',
+            'give me an update on my order status',
+            'is my order on its way?',
+            'tell me the delivery status of my order',
+            'check order status',
+            'track my shipment',
+            'locate my package'
+        ],
+            'representative_request': [
+                'I need to speak with a representative',
+                'how can I talk to someone?',
+                'can I speak to a human?',
+                'connect me to a live agent',
+                'talk to customer service',
+                'get me a representative please',
+                'I want to chat with an agent',
+                'need assistance from a person',
+                'help from a real person',
+                'transfer me to a representative',
+                'contact customer support'
+            ],
+            'return_policy': [
+                'what is your return policy?',
+                'how do I return an item?',
+                'can I return this?',
+                'what are your policies on returns?',
+                'I want to send back my purchase',
+                'how long do I have to return?',
+                'returning an item',
+                'policy for returning items',
+                'explanation of your return policy',
+                'conditions for returns',
+                'do you accept returns?',
+
+            ],
+            'items_cannot_be_returned': [
+                'which items cannot be returned?',
+                'what items are non-returnable?',
+                'are there any items I cannot return?',
+                'list of non-returnable items',
+                'items that cannot be refunded',
+                'non-returnable products',
+                'what can\'t I return?',
+                'items that are final sale',
+                'cannot return these items'
+            ],
+            'refund': [
+                'how do I get a refund?',
+                'can I get my money back?',
+                'what is your refund process?',
+                'process for refunds?',
+                'refund my purchase please',
+                'I want a refund',
+                'refund policy',
+                'when will I get refunded?',
+                'how long does a refund take?',
+                'getting money back',
+                'return and refund',
+                'can I get a credit back?',
+                'can I get a refund?'
+            ],
+            'quit': [
+                'exit',
+                'goodbye',
+                'quit',
+                'stop',
+                'end chat',
+                'leave',
+                'close',
+                'terminate chat',
+                'done chat',
+                'bye'
+            ],
+            'other': [
+                'can you help me with something else?',
+                'I have another question',
+                'unrelated inquiry',
+                'ask about something different',
+                'different topic',
+                'not related to previous',
+                'something else',
+                'other matter',
+                'another issue',
+                'different question',
+                'additional assistance',
+                'something unrelated'
+            ]
+        }
+        total, true_intent = 0, 0
+        for intent, test_case in tests.items():
+            for test in test_case:
+                total += 1
+                chatbot_intent = chatbot.detect_intent(test)
+                print(f'True intent:{intent}, Chatbot intent: {chatbot_intent}, Question: {test}', end=' ')
+                if chatbot_intent == intent:
+                    true_intent += 1
+
+                accuracy = true_intent / total if total > 0 else 0
+                accuracy_percent = accuracy * 100
+                print(f",total: {total}, true_intent: {true_intent}, accuracy: {accuracy_percent:.2f}%")
+        print(f'total questions: {total}, true_intent: {true_intent}, accuracy: {accuracy_percent:.2f}%')
+
 
 
 if __name__ == '__main__':

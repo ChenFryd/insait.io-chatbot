@@ -1,7 +1,5 @@
 from openai import OpenAI
 import csv
-import os
-import asyncio
 
 
 class ChatBot:
@@ -67,12 +65,12 @@ class ChatBot:
     def detect_intent(self, user_input):
         response = self.client.chat.completions.create(
             messages=[
-                {"role": "system", "content": "You are a chatbot that categorizes user input into predefined intents: order_status, representative_request, return_policy, items_cannot_be_returned, refund, other. Just return the detected intent."},
+                {"role": "system", "content": "You are a chatbot that categorizes user input into predefined intents: order_status, representative_request, return_policy, items_cannot_be_returned, refund, quit, other. Just return the detected intent."},
                 {"role": "user", "content": user_input},
                 {"role": "assistant", "content": "The user's intent is: [intent]"}  # Model will fill in the [intent] part
             ],
             max_tokens=10,
-            model="gpt-3.5-turbo"
+            model="gpt-4-turbo"
         )
         return response.choices[0].message.content
 
