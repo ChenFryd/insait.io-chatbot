@@ -52,6 +52,7 @@ Example:</br>
 The chat just tells the user the asked return policy.
 
 ### Other
+The chatbot will ignore unrelated questions so the chat will not go off-topic.
 ![img_5.png](readme_images/img_5.png)
 
 
